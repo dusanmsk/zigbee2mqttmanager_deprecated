@@ -1,6 +1,7 @@
 package org.msk.loxone.zigbee2mqtt.manager.ui;
 
 import com.vaadin.flow.component.Text;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
@@ -62,8 +63,14 @@ public class MainView extends VerticalLayout {
 
         add(editButton);
 
+        add(new Button("Edit mappings", e->onEditMappings()));
+
         add(saveButton);
 
+    }
+
+    private void onEditMappings() {
+        UI.getCurrent().navigate(EditMappingForm.class);
     }
 
     private void refreshDeviceList() {

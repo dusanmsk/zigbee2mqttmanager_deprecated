@@ -3,6 +3,7 @@ package org.msk.loxone.zigbee2mqtt.zigbee;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,6 +32,11 @@ public class DeviceConfiguration {
                 .build());
     }
 
+    public void setMappings(Collection<MappingDefinition> mappings) {
+        configuration.valueMappingDefinitions.clear();
+        configuration.valueMappingDefinitions.addAll(mappings);
+    }
+
     public String translateValueForward(DeviceType deviceType, String path, String value) {
         Optional<String> returnValue = configuration.valueMappingDefinitions.stream().filter(i ->
                 i.deviceType.equals(deviceType) &&
@@ -56,7 +62,7 @@ public class DeviceConfiguration {
 
     @Builder
     @EqualsAndHashCode
-    static class MappingDefinition {
+    public static class MappingDefinition {
 
         public DeviceType deviceType;
         public String path;
