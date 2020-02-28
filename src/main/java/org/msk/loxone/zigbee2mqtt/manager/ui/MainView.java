@@ -70,7 +70,7 @@ public class MainView extends VerticalLayout {
     }
 
     private void onEditMappings() {
-        UI.getCurrent().navigate(EditMappingForm.class);
+        UI.getCurrent().navigate(EditMappingForm2.class);
     }
 
     private void refreshDeviceList() {
@@ -109,4 +109,6 @@ public class MainView extends VerticalLayout {
     public Optional<ZigbeeDevice> getSelectedDevice() {
         return zigbeeDeviceGrid.getSelectedItems().stream().findFirst();
     }
+
+
 }
