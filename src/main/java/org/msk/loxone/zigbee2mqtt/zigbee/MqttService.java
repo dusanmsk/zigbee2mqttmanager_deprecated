@@ -21,6 +21,7 @@ public class MqttService {
         mqttClient = new MqttClient("tcp://192.168.17.31", "loxone_zigbee_gw2", new MemoryPersistence());
         MqttConnectOptions options = new MqttConnectOptions();
         options.setAutomaticReconnect(true);
+        options.setMaxReconnectDelay(5000);
         options.setCleanSession(true);
         options.setConnectionTimeout(10);
 
@@ -34,7 +35,6 @@ public class MqttService {
         mqttClient.subscribe(topic, listener);
     }
 
-    @Async
     public void publish(String topic, String value) {
         try {
             mqttClient.publish(topic, value.getBytes(Charset.defaultCharset()), 2, false);
