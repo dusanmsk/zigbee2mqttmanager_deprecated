@@ -70,7 +70,7 @@ public class MainView extends VerticalLayout {
     }
 
     private void onEditMappings() {
-        UI.getCurrent().navigate(EditMappingForm2.class);
+        UI.getCurrent().navigate(EditMappingForm.class);
     }
 
     private void refreshDeviceList() {
