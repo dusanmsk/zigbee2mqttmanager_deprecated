@@ -2,6 +2,7 @@ package org.msk.loxone.zigbee2mqtt.manager.ui;
 
 import javax.annotation.PostConstruct;
 
+import com.vaadin.flow.component.notification.Notification;
 import lombok.RequiredArgsConstructor;
 
 import com.vaadin.flow.component.ClickEvent;
@@ -14,15 +15,19 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import com.vaadin.flow.spring.annotation.UIScope;
+import lombok.extern.slf4j.Slf4j;
+import org.msk.zigbee2mqtt.configuration.DeviceConfiguration;
 
 @Route
 @SpringComponent
 @RequiredArgsConstructor
 @UIScope
+@Slf4j
 public class EditMappingForm extends VerticalLayout {
 
     private final MappingForm mappingForm;
     private final ValueMappingSourceForm valueMappingSourceForm;
+    private final DeviceConfiguration deviceConfiguration;
 
     private TextField currentlyEditingValueTextField = new TextField();
     private Button createMappingButton = new Button("Create mapping", this::createNewMapping);
@@ -38,21 +43,22 @@ public class EditMappingForm extends VerticalLayout {
     @PostConstruct
     private void setupUI() {
         add(mappingForm);
-        //add(currentlyEditingValueTextFieldLabel);
         add(new HorizontalLayout(new Label("Map to:"), currentlyEditingValueTextField, createMappingButton));
 
         add(valueMappingSourceForm);
-        add(new HorizontalLayout(new Button("Save", this::onSave), new Button("Cancel", this::onCancel)));
+        add(new HorizontalLayout(new Button("Save", this::onSave)));
 
-    }
-
-    private void onCancel(ClickEvent<Button> buttonClickEvent) {
-        UI.getCurrent().navigate(MainView.class);
     }
 
     private void onSave(ClickEvent<Button> buttonClickEvent) {
-        mappingForm.save();
-        UI.getCurrent().navigate(MainView.class);
+        try {
+            mappingForm.commit();
+            deviceConfiguration.save();
+            UI.getCurrent().navigate(MainView.class);
+        } catch ( Exception e) {
+            log.error("Failed to save config", e);
+            Notification.show("Failed to save config");
+        }
     }
 
 }
