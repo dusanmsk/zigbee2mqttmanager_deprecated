@@ -1,0 +1,9 @@
+logging.level.org.msk: DEBUG
+
+
+mqtt:
+  client:
+    id: zigbee2loxoneManager
+
+server:
+  port: ${SERVER_PORT:8080}
