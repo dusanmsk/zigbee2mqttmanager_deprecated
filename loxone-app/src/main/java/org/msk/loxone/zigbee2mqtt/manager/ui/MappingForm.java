@@ -70,7 +70,7 @@ public class MappingForm extends VerticalLayout {
         updateMappingGrid();
     }
 
-    public void save() {
+    public void commit() {
         deviceConfiguration.setMappings(mappingGridModel);
     }
 
