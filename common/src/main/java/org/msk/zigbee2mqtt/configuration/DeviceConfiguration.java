@@ -26,7 +26,6 @@ public class DeviceConfiguration {
         new ObjectMapper().writeValue(cfgFile, configuration);
     }
 
-    @PostConstruct
     public void load()  {
         try {
             configuration = new ObjectMapper().readValue(cfgFile, Configuration.class);

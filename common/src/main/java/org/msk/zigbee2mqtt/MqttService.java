@@ -7,19 +7,23 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
 import java.nio.charset.Charset;
 
+import static java.lang.String.format;
+
 @Component
 @Slf4j
 public class MqttService {
 
-    @Value("${MQTT_ADDRESS}")
-    private String MQTT_ADDRESS;
+    @Value("${MQTT_HOST}")
+    private String MQTT_HOST;
+
+    @Value("${MQTT_PORT}")
+    private String MQTT_PORT;
 
     @Value("${mqtt.client.id}")
     private String MQTT_CLIENT_ID;
@@ -28,8 +32,9 @@ public class MqttService {
 
     @PostConstruct
     void init() throws MqttException {
-        Assert.notNull(MQTT_ADDRESS, "You must configure MQTT_ADDRESS environment variable");
-        mqttClient = new MqttClient(MQTT_ADDRESS, MQTT_CLIENT_ID, new MemoryPersistence());
+        Assert.notNull(MQTT_HOST, "You must configure MQTT_HOST environment variable");
+        Assert.notNull(MQTT_PORT, "You must configure MQTT_PORT environment variable");
+        mqttClient = new MqttClient(format("tcp://%s:%s", MQTT_HOST, MQTT_PORT), MQTT_CLIENT_ID, new MemoryPersistence());
         MqttConnectOptions options = new MqttConnectOptions();
         options.setAutomaticReconnect(true);
         options.setMaxReconnectDelay(5000);

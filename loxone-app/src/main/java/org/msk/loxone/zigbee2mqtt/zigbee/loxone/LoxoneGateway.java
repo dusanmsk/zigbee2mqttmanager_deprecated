@@ -18,14 +18,18 @@ import org.msk.zigbee2mqtt.configuration.DeviceConfiguration;
 import org.msk.zigbee2mqtt.MqttService;
 import org.msk.zigbee2mqtt.ZigbeeService;
 import org.msk.zigbee2mqtt.configuration.DeviceType;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class LoxoneGateway {
 
-    private static final String MQTT_TO_LOXONE_TOPIC = "lox_in_TODO";    // todo dusan.zatkovsky config
+    @Value("${MQTT_TO_LOXONE_TOPIC}")
+    private String MQTT_TO_LOXONE_TOPIC;
+
     private final ZigbeeService zigbeeService;
     private final MqttService mqttService;
     private final ObjectMapper objectMapper;
@@ -34,6 +38,8 @@ public class LoxoneGateway {
 
     @PostConstruct
     private void init() {
+        Assert.notNull(MQTT_TO_LOXONE_TOPIC, "You must configure MQTT_TO_LOXONE_TOPIC environment variable");
+        deviceConfiguration.load();
         zigbeeService.addZigbeeDeviceMessageListener(this::processMessage);
     }
 
