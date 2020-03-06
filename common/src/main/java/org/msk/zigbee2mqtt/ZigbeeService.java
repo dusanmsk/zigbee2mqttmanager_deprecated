@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -31,7 +32,7 @@ public class ZigbeeService {
     private final MqttService mqttService;
     private final String ZIGBEE2MQTT_PREFIX = "zigbee2mqtt"; // todo dusan.zatkovsky configuration
     private Set<MqttMessageListener> zigbeeDeviceMessageListeners = new HashSet<>();
-    private List<ZigbeeDevice> devices;
+    private List<ZigbeeDevice> devices = new ArrayList<>();
     private int remainingSecondsToDisable;
     private BridgeConfig bridgeConfig;
 
