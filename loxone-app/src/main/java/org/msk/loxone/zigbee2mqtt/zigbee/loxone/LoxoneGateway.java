@@ -74,8 +74,9 @@ public class LoxoneGateway {
             l.apply(deviceName, path, value);
         }
         value = translateToLoxone(deviceName, path, value);
-        mqttService.publish(MQTT_TO_LOXONE_TOPIC, format("%s %s", path, value));
-        log.debug("Sending zigbee device '{}' path '{}' value '{}' to loxone", deviceName, path, value);
+        String loxoneMsg = format("zigbee/%s/%s %s", deviceName, path, value);
+        mqttService.publish(MQTT_TO_LOXONE_TOPIC, loxoneMsg);
+        log.debug("Sent '{}' to loxone", loxoneMsg);
     }
 
     private String translateToLoxone(String deviceName, String path, String value) {
