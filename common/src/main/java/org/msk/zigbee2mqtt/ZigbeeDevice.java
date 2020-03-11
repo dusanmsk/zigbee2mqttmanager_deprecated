@@ -21,4 +21,5 @@ public class ZigbeeDevice {
     private String friendlyName;
     private String modelID;
     private String manufacturerName;
+    private Long lastSeen;
 }

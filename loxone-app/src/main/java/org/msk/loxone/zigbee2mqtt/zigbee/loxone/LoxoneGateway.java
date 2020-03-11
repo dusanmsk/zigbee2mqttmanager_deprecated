@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.msk.zigbee2mqtt.configuration.DeviceConfiguration;
 import org.msk.zigbee2mqtt.MqttService;
 import org.msk.zigbee2mqtt.ZigbeeService;
@@ -37,7 +38,8 @@ public class LoxoneGateway {
     private List<Listener> listeners = new ArrayList<>();
 
     @PostConstruct
-    private void init() {
+    private void init() throws MqttException {
+        mqttService.init();
         Assert.notNull(MQTT_TO_LOXONE_TOPIC, "You must configure MQTT_TO_LOXONE_TOPIC environment variable");
         deviceConfiguration.load();
         zigbeeService.addZigbeeDeviceMessageListener(this::processMessage);
