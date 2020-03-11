@@ -38,6 +38,7 @@ public class ZigbeeService {
 
     @PostConstruct
     void init() throws MqttException {
+        mqttService.init();
         mqttService.subscribe(zigbeeTopic("/+"), this::processZigbeeDeviceMessage);
         mqttService.subscribe(zigbeeTopic("/bridge/config/devices"), this::processDevicesListMessage);
         mqttService.subscribe(zigbeeTopic("/bridge/config"), this::processConfigMessage);

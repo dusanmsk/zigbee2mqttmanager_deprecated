@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
-import javax.annotation.PostConstruct;
 import java.nio.charset.Charset;
 
 import static java.lang.String.format;
@@ -30,8 +29,12 @@ public class MqttService {
 
     private MqttClient mqttClient;
 
-    @PostConstruct
-    void init() throws MqttException {
+    boolean initialized = false;
+
+    synchronized public void init() throws MqttException {
+        if (initialized) {
+            return;
+        }
         Assert.notNull(MQTT_HOST, "You must configure MQTT_HOST environment variable");
         Assert.notNull(MQTT_PORT, "You must configure MQTT_PORT environment variable");
         mqttClient = new MqttClient(format("tcp://%s:%s", MQTT_HOST, MQTT_PORT), MQTT_CLIENT_ID, new MemoryPersistence());
@@ -39,11 +42,10 @@ public class MqttService {
         options.setAutomaticReconnect(true);
         options.setMaxReconnectDelay(5000);
         options.setCleanSession(true);
-        options.setConnectionTimeout(10);
 
-        if (!mqttClient.isConnected()) {
-            mqttClient.connect(options);
-        }
+        mqttClient.connect(options);
+        log.info("Connected");
+        initialized = true;
     }
 
     public void subscribe(String topic, IMqttMessageListener listener) throws MqttException {
