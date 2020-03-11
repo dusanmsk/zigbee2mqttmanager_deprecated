@@ -27,6 +27,8 @@ import org.msk.zigbee2mqtt.ZigbeeService;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import javax.annotation.PostConstruct;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 
 import static java.lang.String.format;
 
@@ -76,6 +78,7 @@ public class MainView extends VerticalLayout {
         zigbeeDeviceGrid.addColumn(ZigbeeDevice::getModelID).setHeader("Model").setSortable(true);
         zigbeeDeviceGrid.addColumn(ZigbeeDevice::getType).setHeader("Type").setSortable(true);
         zigbeeDeviceGrid.addColumn(ZigbeeDevice::getIeeeAddr).setHeader("Address").setSortable(true);
+        zigbeeDeviceGrid.addColumn(device -> formatLastSeen(device)).setHeader("Last seen").setSortable(true);
         Grid.Column<ZigbeeDevice> editorColumn = zigbeeDeviceGrid.addComponentColumn(this::createEditButton).setHeader("").setSortable(false);
 
         // setup rename (editor)
@@ -136,6 +139,29 @@ public class MainView extends VerticalLayout {
 
     private void disableJoin(ClickEvent<Button> buttonClickEvent) {
         zigbeeService.enableJoin(false, 0);
+    }
+
+    private String formatLastSeen(ZigbeeDevice device) {
+        Duration duration = Duration.of(System.currentTimeMillis() - device.getLastSeen(), ChronoUnit.MILLIS);
+        String unit = "sec";
+        long value = 0;
+        if (duration.toSeconds() > 0) {
+            unit = "sec";
+            value = duration.toSeconds();
+        }
+        if (duration.toMinutes() > 0) {
+            unit = "min";
+            value = duration.toMinutes();
+        }
+        if (duration.toHours() > 0) {
+            unit = "hours";
+            value = duration.toHours();
+        }
+        if (duration.toDays() > 0) {
+            unit = "days";
+            value = duration.toDays();
+        }
+        return String.format("%s %s", value, unit);
     }
 
     @Scheduled(fixedDelay = 5000)
