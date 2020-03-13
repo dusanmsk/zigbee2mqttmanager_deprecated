@@ -1,4 +1,4 @@
-package org.msk.loxone.zigbee2mqtt;
+package org.msk.zigbee2mqtt;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;

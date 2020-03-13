@@ -41,8 +41,7 @@ public class MqttService {
         MqttConnectOptions options = new MqttConnectOptions();
         options.setAutomaticReconnect(true);
         options.setMaxReconnectDelay(5000);
-        options.setCleanSession(true);
-
+        options.setCleanSession(false);
         mqttClient.connect(options);
         log.info("Connected");
         initialized = true;

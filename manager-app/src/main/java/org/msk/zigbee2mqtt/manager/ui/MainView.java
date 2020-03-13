@@ -1,4 +1,4 @@
-package org.msk.loxone.zigbee2mqtt.manager.ui;
+package org.msk.zigbee2mqtt.manager.ui;
 
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Text;
@@ -24,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.msk.zigbee2mqtt.ZigbeeDevice;
 import org.msk.zigbee2mqtt.ZigbeeService;
+import org.msk.zigbee2mqtt.loxone.ui.LoxoneMappingForm;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import javax.annotation.PostConstruct;
@@ -42,6 +43,8 @@ import static java.lang.String.format;
 public class MainView extends VerticalLayout {
 
     private final ZigbeeService zigbeeService;
+    private final LoxoneMappingForm loxoneMappingForm;
+
     private Grid<ZigbeeDevice> zigbeeDeviceGrid;
     private Editor<ZigbeeDevice> editor;
     private TextField friendlyNameTextField;
@@ -60,11 +63,14 @@ public class MainView extends VerticalLayout {
     private void setupUI() {
         ui = UI.getCurrent();
         setupGrid();
+        add(new Label("Zigbee device management:"));
         add(statusLabel);
         add(new HorizontalLayout(enableJoinButton, disableJoinButton, autoDisableMinutesTextField));
-        add(new Text("Zigbee device list:"));
+        //add(new Text("Zigbee device list:"));
         add(new Button("Refresh", this::refreshDeviceList));
         add(zigbeeDeviceGrid);
+        add(new Label("Loxone mapping:"));
+        add(loxoneMappingForm);
         autoDisableMinutesTextField.setValue("30");
         update();
     }
