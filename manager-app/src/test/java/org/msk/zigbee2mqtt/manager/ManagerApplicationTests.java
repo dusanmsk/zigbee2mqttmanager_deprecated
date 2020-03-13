@@ -1,4 +1,4 @@
-package org.msk.loxone.zigbee2mqtt.manager;
+package org.msk.zigbee2mqtt.manager;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

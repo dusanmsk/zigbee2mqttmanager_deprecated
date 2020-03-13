@@ -16,7 +16,7 @@
     <modules>
         <module>common</module>
         <module>manager-app</module>
-        <module>loxone-app</module>
+        <!--<module>loxone-app</module>-->
     </modules>
 
 
