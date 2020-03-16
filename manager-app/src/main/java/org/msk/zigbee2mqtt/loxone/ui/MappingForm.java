@@ -28,7 +28,7 @@ public class MappingForm extends VerticalLayout {
 
     @PostConstruct
     void init() {
-        mappingGrid=new Grid<>();
+        mappingGrid = new Grid<>();
         mappingGridModel = deviceConfiguration.getMappings().stream().collect(Collectors.toSet());
         mappingGrid.addColumn(MappingDefinition::getDeviceType).setHeader("Device type").setSortable(true);
         mappingGrid.addColumn(MappingDefinition::getPath).setHeader("Value path").setSortable(true);
@@ -43,7 +43,7 @@ public class MappingForm extends VerticalLayout {
     }
 
     private Button createDeleteButton(Grid<MappingDefinition> grid, MappingDefinition item) {
-        return new Button("Delete", clickEvent->{
+        return new Button("Delete", clickEvent -> {
             mappingGridModel.remove(item);
             updateMappingGrid();
         });
