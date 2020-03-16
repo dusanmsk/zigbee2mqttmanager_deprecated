@@ -1,7 +1,6 @@
 package org.msk.zigbee2mqtt.manager.ui;
 
 import com.vaadin.flow.component.ClickEvent;
-import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
@@ -43,7 +42,6 @@ import static java.lang.String.format;
 public class MainView extends VerticalLayout {
 
     private final ZigbeeService zigbeeService;
-    private final LoxoneMappingForm loxoneMappingForm;
 
     private Grid<ZigbeeDevice> zigbeeDeviceGrid;
     private Editor<ZigbeeDevice> editor;
@@ -54,6 +52,7 @@ public class MainView extends VerticalLayout {
     private Button enableJoinButton = new Button("Enable", this::enableJoin);
     private Label statusLabel = new Label();
     private UI ui;
+    private boolean loxoneStuffEnabled = true;
 
     @PostConstruct
     public void init() {
@@ -69,8 +68,10 @@ public class MainView extends VerticalLayout {
         //add(new Text("Zigbee device list:"));
         add(new Button("Refresh", this::refreshDeviceList));
         add(zigbeeDeviceGrid);
-        add(new Label("Loxone mapping:"));
-        add(loxoneMappingForm);
+        if(loxoneStuffEnabled) {
+            add(new Label("Loxone mapping:"));
+            add(new Button("Edit", event -> getUI().get().navigate(LoxoneMappingForm.class)));
+        }
         autoDisableMinutesTextField.setValue("30");
         update();
     }
@@ -174,14 +175,10 @@ public class MainView extends VerticalLayout {
     void update() {
         ui.access(() -> {
             if (zigbeeService.isJoinEnabled()) {
-                enableJoinButton.setEnabled(false);
-                disableJoinButton.setEnabled(true);
-                statusLabel.setText(format("Joining is enabled for next %s minutes", zigbeeService.getJoinTimeout() / 60));
+                long howMinutes = (zigbeeService.getJoinTimeout() - System.currentTimeMillis()) / 1000 / 60;
+                statusLabel.setText(format("Joining is enabled for next %s minutes", howMinutes));
             } else {
                 statusLabel.setText("Joining is disabled");
-                enableJoinButton.setEnabled(true);
-                disableJoinButton.setEnabled(false);
-
             }
         });
 

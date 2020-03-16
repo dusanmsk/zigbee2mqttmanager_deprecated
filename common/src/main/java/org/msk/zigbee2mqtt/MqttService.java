@@ -1,18 +1,24 @@
 package org.msk.zigbee2mqtt;
 
+import com.hivemq.client.mqtt.datatypes.MqttQos;
+import com.hivemq.client.mqtt.lifecycle.MqttClientAutoReconnect;
+import com.hivemq.client.mqtt.mqtt5.Mqtt5AsyncClient;
+import com.hivemq.client.mqtt.mqtt5.Mqtt5Client;
+import com.hivemq.client.mqtt.mqtt5.message.publish.Mqtt5Publish;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
-import java.nio.charset.Charset;
-
-import static java.lang.String.format;
+import javax.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 @Component
 @Slf4j
@@ -22,43 +28,69 @@ public class MqttService {
     private String MQTT_HOST;
 
     @Value("${MQTT_PORT}")
-    private String MQTT_PORT;
+    private Integer MQTT_PORT;
 
     @Value("${mqtt.client.id}")
     private String MQTT_CLIENT_ID;
 
-    private MqttClient mqttClient;
+    private Mqtt5AsyncClient mqttClient;
 
-    boolean initialized = false;
+    private List<Subscription> subscriptions = new ArrayList();
 
-    synchronized public void init() throws MqttException {
-        if (initialized) {
-            return;
-        }
+    @PostConstruct
+    void init() throws ExecutionException, InterruptedException {
         Assert.notNull(MQTT_HOST, "You must configure MQTT_HOST environment variable");
         Assert.notNull(MQTT_PORT, "You must configure MQTT_PORT environment variable");
-        mqttClient = new MqttClient(format("tcp://%s:%s", MQTT_HOST, MQTT_PORT), MQTT_CLIENT_ID, new MemoryPersistence());
-        MqttConnectOptions options = new MqttConnectOptions();
-        options.setAutomaticReconnect(true);
-        options.setMaxReconnectDelay(5000);
-        options.setCleanSession(false);
-        mqttClient.connect(options);
+
+        mqttClient = Mqtt5Client.builder()
+                .identifier(MQTT_CLIENT_ID + ":" + UUID.randomUUID())
+                .serverHost(MQTT_HOST)
+                .serverPort(MQTT_PORT)
+                .automaticReconnect(MqttClientAutoReconnect.builder().initialDelay(10, TimeUnit.SECONDS).maxDelay(5, TimeUnit.MINUTES).build())
+                .addDisconnectedListener(context -> context.getReconnector().reconnect(true))
+                .addConnectedListener(context -> {
+                    log.info("mqtt connected");
+                    resubscribe();
+                })
+                .addDisconnectedListener(context -> log.info("mqtt disconnected"))
+                .buildAsync();
+
+        mqttClient.connect().get();
         log.info("Connected");
-        initialized = true;
     }
 
-    public void subscribe(String topic, IMqttMessageListener listener) throws MqttException {
+    private void resubscribe() {
+        List<Subscription> oldSubscribtions = subscriptions;
+        subscriptions = new ArrayList<>();
+        oldSubscribtions.stream().forEach(subscription -> subscribe(subscription.getTopic(), subscription.getConsumer()));
+    }
+
+    public void subscribe(String topic, Consumer<Mqtt5Publish> listener) {
         log.debug("Subscribing to {}", topic);
-        mqttClient.subscribe(topic, listener);
+        subscriptions.add(new Subscription(topic, listener));
+        mqttClient.subscribeWith()
+                .topicFilter(topic)
+                .qos(MqttQos.AT_LEAST_ONCE)
+                .callback(listener)
+                .send();
     }
 
     public void publish(String topic, String value) {
         try {
-            mqttClient.publish(topic, value.getBytes(Charset.defaultCharset()), 2, false);
-        } catch (MqttException e) {
+            mqttClient.publishWith()
+                    .topic(topic)
+                    .payload(value.getBytes())
+                    .send().get();
+            log.debug("Sent mqtt {} : {}", topic, value);
+        } catch (Exception e) {
             log.error("Failed to send mqtt message", e);
         }
-        log.debug("Sent mqtt {} : {}", topic, value);
     }
 
+    @AllArgsConstructor
+    @Getter
+    private class Subscription {
+        private String topic;
+        private Consumer<Mqtt5Publish> consumer;
+    }
 }

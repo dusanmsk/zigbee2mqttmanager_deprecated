@@ -3,7 +3,6 @@ package org.msk.zigbee2mqtt.loxone;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.MqttException;
 import org.msk.zigbee2mqtt.MqttService;
 import org.msk.zigbee2mqtt.ZigbeeService;
 import org.msk.zigbee2mqtt.configuration.DeviceConfiguration;
@@ -18,6 +17,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import static java.lang.String.format;
 
@@ -34,10 +34,14 @@ public class LoxoneGateway {
     private final ObjectMapper objectMapper;
     private final DeviceConfiguration deviceConfiguration;
     private List<Listener> listeners = new ArrayList<>();
+    // todo dusan.zatkovsky config
+    private boolean loxoneStuffEnabled = true;
 
     @PostConstruct
-    private void init() throws MqttException {
-        mqttService.init();
+    private void init() throws ExecutionException, InterruptedException {
+        if(!loxoneStuffEnabled) {
+            return;
+        }
         Assert.notNull(MQTT_TO_LOXONE_TOPIC, "You must configure MQTT_TO_LOXONE_TOPIC environment variable");
         deviceConfiguration.load();
         zigbeeService.addZigbeeDeviceMessageListener(this::processMessage);
