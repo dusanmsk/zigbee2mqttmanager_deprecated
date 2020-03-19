@@ -26,7 +26,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @SpringComponent
-@UIScope
 @RequiredArgsConstructor
 public class ValueMappingSourceForm extends VerticalLayout {
 
@@ -45,7 +44,7 @@ public class ValueMappingSourceForm extends VerticalLayout {
 
     @PostConstruct
     public void init() {
-        loxoneGateway.addListener(this::rememberLoxoneValue);
+        loxoneGateway.addListener(this::cacheZigbeeMessage);
         TextField filterTextField = new TextField();
         filterTextField.setValueChangeMode(ValueChangeMode.EAGER);
         filterTextField.addValueChangeListener(this::setFilter);
@@ -82,7 +81,7 @@ public class ValueMappingSourceForm extends VerticalLayout {
                 mappingDefinition.getOriginalValue().contains(filterText)).collect(Collectors.toList());
     }
 
-    private void rememberLoxoneValue(String deviceName, String path, String value) {
+    private void cacheZigbeeMessage(String deviceName, String path, String value) {
         DeviceType deviceType = zigbeeService.getDeviceType(deviceName);
         if (deviceType != null) {
             listeningGridModel.add(new MappingDefinition(
