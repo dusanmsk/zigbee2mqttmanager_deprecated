@@ -37,10 +37,25 @@ public class ZigbeeService {
 
     @PostConstruct
     void init() throws ExecutionException, InterruptedException {
-        mqttService.subscribe(zigbeeTopic("/+"), this::processZigbeeDeviceMessage);
-        mqttService.subscribe(zigbeeTopic("/bridge/config/devices"), this::processDevicesListMessage);
-        mqttService.subscribe(zigbeeTopic("/bridge/config"), this::processConfigMessage);
-        mqttService.subscribe(zigbeeTopic("/#"), this::logZigbeeMessage);
+        mqttService.init();
+        mqttService.subscribe(zigbeeTopic("/#"), this::dispatchZigbeeMessage);
+    }
+
+    private void dispatchZigbeeMessage(Mqtt5Publish mqtt5Publish) {
+        try {
+            logZigbeeMessage(mqtt5Publish);
+
+            String topic = mqtt5Publish.getTopic().toString();
+            if (topic.split("/").length == 2) {
+                processZigbeeDeviceMessage(mqtt5Publish);
+            } else if (topic.endsWith("/bridge/config")) {
+                processConfigMessage(mqtt5Publish);
+            } else if (topic.endsWith("/bridge/config/devices")) {
+                processDevicesListMessage(mqtt5Publish);
+            }
+        } catch (Exception e) {
+            log.error("Failed to process zigbee message", e);
+        }
     }
 
     @Scheduled(fixedDelay = 30000)
@@ -121,7 +136,7 @@ public class ZigbeeService {
         joinDisableDateTimeEpochMs = System.currentTimeMillis() + autoDisableSeconds * 1000;
     }
 
-    private String zigbeeTopic(String topic) {
+    public String zigbeeTopic(String topic) {
         return (ZIGBEE2MQTT_PREFIX + topic).replaceAll("//", "/");
     }
 

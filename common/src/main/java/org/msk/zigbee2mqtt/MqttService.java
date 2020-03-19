@@ -37,8 +37,8 @@ public class MqttService {
 
     private List<Subscription> subscriptions = new ArrayList();
 
-    @PostConstruct
     void init() throws ExecutionException, InterruptedException {
+        log.debug("Initializing mqtt service");
         Assert.notNull(MQTT_HOST, "You must configure MQTT_HOST environment variable");
         Assert.notNull(MQTT_PORT, "You must configure MQTT_PORT environment variable");
 
@@ -72,7 +72,7 @@ public class MqttService {
                 .topicFilter(topic)
                 .qos(MqttQos.AT_LEAST_ONCE)
                 .callback(listener)
-                .send();
+                .send().join();
     }
 
     public void publish(String topic, String value) {
@@ -80,7 +80,7 @@ public class MqttService {
             mqttClient.publishWith()
                     .topic(topic)
                     .payload(value.getBytes())
-                    .send().get();
+                    .send(); //.get(1, TimeUnit.SECONDS);
             log.debug("Sent mqtt {} : {}", topic, value);
         } catch (Exception e) {
             log.error("Failed to send mqtt message", e);

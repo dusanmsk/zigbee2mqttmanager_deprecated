@@ -17,7 +17,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @SpringComponent
-@UIScope
 @RequiredArgsConstructor
 public class MappingForm extends VerticalLayout {
 

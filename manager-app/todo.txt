@@ -1,3 +1,2 @@
 - loxone stuff ako volitelny (na zaklade environment variable)
-- na tlacitko a routa
-- push na mainview
+- pouzivat filteringgrid

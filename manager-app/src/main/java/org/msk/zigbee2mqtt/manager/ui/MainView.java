@@ -16,6 +16,7 @@ import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.validator.StringLengthValidator;
+import com.vaadin.flow.router.PreserveOnRefresh;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import com.vaadin.flow.spring.annotation.UIScope;
@@ -32,13 +33,13 @@ import java.time.temporal.ChronoUnit;
 
 import static java.lang.String.format;
 
-
 @Route
-@SpringComponent
-@RequiredArgsConstructor
 @UIScope
-@Slf4j
+@SpringComponent
 @Push
+@PreserveOnRefresh
+@RequiredArgsConstructor
+@Slf4j
 public class MainView extends VerticalLayout {
 
     private final ZigbeeService zigbeeService;
@@ -65,13 +66,15 @@ public class MainView extends VerticalLayout {
         add(new Label("Zigbee device management:"));
         add(statusLabel);
         add(new HorizontalLayout(enableJoinButton, disableJoinButton, autoDisableMinutesTextField));
-        //add(new Text("Zigbee device list:"));
         add(new Button("Refresh", this::refreshDeviceList));
         add(zigbeeDeviceGrid);
-        if(loxoneStuffEnabled) {
+        if (loxoneStuffEnabled) {
             add(new Label("Loxone mapping:"));
             add(new Button("Edit", event -> getUI().get().navigate(LoxoneMappingForm.class)));
         }
+        add(new Label("Zigbee logs:"));
+        add(new Button("Open", event -> getUI().get().navigate(ZigbeeLogForm.class)));
+
         autoDisableMinutesTextField.setValue("30");
         update();
     }
@@ -173,15 +176,17 @@ public class MainView extends VerticalLayout {
 
     @Scheduled(fixedDelay = 5000)
     void update() {
-        ui.access(() -> {
-            if (zigbeeService.isJoinEnabled()) {
+        getUI().ifPresent(ui -> ui.access(() -> {
+            boolean joinEnabled = zigbeeService.isJoinEnabled();
+            if (joinEnabled) {
                 long howMinutes = (zigbeeService.getJoinTimeout() - System.currentTimeMillis()) / 1000 / 60;
                 statusLabel.setText(format("Joining is enabled for next %s minutes", howMinutes));
             } else {
                 statusLabel.setText("Joining is disabled");
             }
-        });
+        }));
 
     }
 
 }
+

@@ -21,6 +21,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     public void configure(WebSecurity web) throws Exception {
+        web.ignoring().antMatchers("**");       // todo dusan.zatkovsky bez tohoto nefunguje autorefresh gridu, treba zistit cim to je
         web.ignoring().antMatchers(
                 "/VAADIN/**",
                 "/frontend/**",

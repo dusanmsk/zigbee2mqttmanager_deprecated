@@ -19,9 +19,9 @@ import org.msk.zigbee2mqtt.manager.ui.MainView;
 import javax.annotation.PostConstruct;
 
 @Route
+@UIScope
 @SpringComponent
 @RequiredArgsConstructor
-@UIScope
 @Slf4j
 public class LoxoneMappingForm extends VerticalLayout {
 
