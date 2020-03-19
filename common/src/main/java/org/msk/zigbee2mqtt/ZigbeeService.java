@@ -3,24 +3,23 @@ package org.msk.zigbee2mqtt;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hivemq.client.mqtt.mqtt5.message.publish.Mqtt5Publish;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.msk.zigbee2mqtt.configuration.DeviceType;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import static java.lang.String.format;
 
@@ -33,16 +32,30 @@ public class ZigbeeService {
     private final String ZIGBEE2MQTT_PREFIX = "zigbee2mqtt"; // todo dusan.zatkovsky configuration
     private Set<MqttMessageListener> zigbeeDeviceMessageListeners = new HashSet<>();
     private List<ZigbeeDevice> devices = new ArrayList<>();
-    private int remainingSecondsToDisable;
+    private Long joinDisableDateTimeEpochMs = 0L;
     private BridgeConfig bridgeConfig;
 
     @PostConstruct
-    void init() throws MqttException {
+    void init() throws ExecutionException, InterruptedException {
         mqttService.init();
-        mqttService.subscribe(zigbeeTopic("/+"), this::processZigbeeDeviceMessage);
-        mqttService.subscribe(zigbeeTopic("/bridge/config/devices"), this::processDevicesListMessage);
-        mqttService.subscribe(zigbeeTopic("/bridge/config"), this::processConfigMessage);
-        mqttService.subscribe(zigbeeTopic("/#"), this::logZigbeeMessage);
+        mqttService.subscribe(zigbeeTopic("/#"), this::dispatchZigbeeMessage);
+    }
+
+    private void dispatchZigbeeMessage(Mqtt5Publish mqtt5Publish) {
+        try {
+            logZigbeeMessage(mqtt5Publish);
+
+            String topic = mqtt5Publish.getTopic().toString();
+            if (topic.split("/").length == 2) {
+                processZigbeeDeviceMessage(mqtt5Publish);
+            } else if (topic.endsWith("/bridge/config")) {
+                processConfigMessage(mqtt5Publish);
+            } else if (topic.endsWith("/bridge/config/devices")) {
+                processDevicesListMessage(mqtt5Publish);
+            }
+        } catch (Exception e) {
+            log.error("Failed to process zigbee message", e);
+        }
     }
 
     @Scheduled(fixedDelay = 30000)
@@ -50,40 +63,46 @@ public class ZigbeeService {
         mqttService.publish(ZIGBEE2MQTT_PREFIX + "/bridge/config/devices/get", "");
     }
 
-    private void processZigbeeDeviceMessage(String topic, MqttMessage mqttMessage) {
+    private void processZigbeeDeviceMessage(Mqtt5Publish mqttMessage) {
+        String topic = mqttMessage.getTopic().toString();
         String deviceName = topic.split("/")[1];
         log.debug("Dispatching zigbee device message to {} listeners", zigbeeDeviceMessageListeners.size());
-        zigbeeDeviceMessageListeners.forEach(l -> l.processMessage(deviceName, mqttMessage.getPayload()));
+        zigbeeDeviceMessageListeners.forEach(l -> l.processMessage(deviceName, mqttMessage.getPayloadAsBytes()));
     }
 
-    private void processDevicesListMessage(String topic, MqttMessage mqttMessage) throws IOException {
-        ZigbeeDevice[] deviceArray = new ObjectMapper().readValue(mqttMessage.getPayload(), ZigbeeDevice[].class);
-        devices = Arrays.asList(deviceArray);
-        log.debug("Received device list info, known devices: {}", devices.size());
+
+    private void processDevicesListMessage(Mqtt5Publish mqttMessage) {
+        try {
+            ZigbeeDevice[] deviceArray = new ObjectMapper().readValue(mqttMessage.getPayloadAsBytes(), ZigbeeDevice[].class);
+            devices = Arrays.asList(deviceArray);
+            log.debug("Received device list info, known devices: {}", devices.size());
+        } catch (Exception e) {
+            log.error("Failed to process device list", e);
+        }
     }
 
-    private void processConfigMessage(String topic, MqttMessage mqttMessage) throws IOException {
-        log.debug("Received bridge config");
-        bridgeConfig = new ObjectMapper().readValue(mqttMessage.getPayload(), BridgeConfig.class);
+    private void processConfigMessage(Mqtt5Publish mqttMessage) {
+        try {
+            log.debug("Received bridge config");
+            bridgeConfig = new ObjectMapper().readValue(mqttMessage.getPayloadAsBytes(), BridgeConfig.class);
+        } catch (Exception e) {
+            log.error("Failed to process bridge config", e);
+        }
+    }
+
+    private void logZigbeeMessage(Mqtt5Publish mqttMessage) {
+        log.debug("Received zigbee message {} : {}", mqttMessage.getTopic().toString(), new String(mqttMessage.getPayloadAsBytes()));
     }
 
     public void addZigbeeDeviceMessageListener(MqttMessageListener listener) {
         zigbeeDeviceMessageListeners.add(listener);
     }
 
-    @Scheduled(fixedDelay = 5000)
+    @Scheduled(fixedDelay = 60000)
     void autoDisableJoin() {
-        if(remainingSecondsToDisable > 0 ) {
-            remainingSecondsToDisable -= 5;       // note must match fixedDelay
+        if (System.currentTimeMillis() > joinDisableDateTimeEpochMs) {
+            mqttService.publish(ZIGBEE2MQTT_PREFIX + "/bridge/config/permit_join", "false");
         }
-        if (remainingSecondsToDisable < 0) {
-            mqttService.publish("zigbee2mqtt/bridge/config/permit_join", "false");
-            remainingSecondsToDisable = 0;
-        }
-    }
-
-    private void logZigbeeMessage(String topic, MqttMessage mqttMessage) {
-        log.debug("Received zigbee message {} : {}", topic, new String(mqttMessage.getPayload()));
     }
 
     public List<ZigbeeDevice> getDeviceList() {
@@ -91,7 +110,7 @@ public class ZigbeeService {
     }
 
     public void renameDevice(String oldFriendlyName, String newFriendlyName) {
-        mqttService.publish("zigbee2mqtt/bridge/config/rename", formatRenameDevicePayload(oldFriendlyName, newFriendlyName));
+        mqttService.publish(ZIGBEE2MQTT_PREFIX + "/bridge/config/rename", formatRenameDevicePayload(oldFriendlyName, newFriendlyName));
     }
 
     private String formatRenameDevicePayload(String oldFriendlyName, String newFriendlyName) {
@@ -113,23 +132,23 @@ public class ZigbeeService {
     }
 
     public void enableJoin(boolean enabled, int autoDisableSeconds) {
-        mqttService.publish("zigbee2mqtt/bridge/config/permit_join", enabled ? "true" : "false");
-        remainingSecondsToDisable = autoDisableSeconds;
+        mqttService.publish(ZIGBEE2MQTT_PREFIX + "/bridge/config/permit_join", enabled ? "true" : "false");
+        joinDisableDateTimeEpochMs = System.currentTimeMillis() + autoDisableSeconds * 1000;
     }
 
-    private String zigbeeTopic(String topic) {
+    public String zigbeeTopic(String topic) {
         return (ZIGBEE2MQTT_PREFIX + topic).replaceAll("//", "/");
     }
 
     public boolean isJoinEnabled() {
-        if(bridgeConfig != null) {
+        if (bridgeConfig != null) {
             return bridgeConfig.permitJoin;
         }
         return false;
     }
 
-    public int getJoinTimeout() {
-        return remainingSecondsToDisable;
+    public long getJoinTimeout() {
+        return joinDisableDateTimeEpochMs;
     }
 
     public interface MqttMessageListener {

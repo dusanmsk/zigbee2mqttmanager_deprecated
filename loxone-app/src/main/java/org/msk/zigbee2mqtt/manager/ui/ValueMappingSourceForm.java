@@ -1,4 +1,4 @@
-package org.msk.loxone.zigbee2mqtt.manager.ui;
+package org.msk.zigbee2mqtt.manager.ui;
 
 import org.msk.zigbee2mqtt.configuration.DeviceType;
 import org.msk.zigbee2mqtt.configuration.MappingDefinition;
@@ -25,7 +25,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import com.vaadin.flow.spring.annotation.UIScope;
-import org.msk.loxone.zigbee2mqtt.zigbee.loxone.LoxoneGateway;
+import org.msk.zigbee2mqtt.zigbee.loxone.LoxoneGateway;
 import org.msk.zigbee2mqtt.ZigbeeService;
 
 @SpringComponent

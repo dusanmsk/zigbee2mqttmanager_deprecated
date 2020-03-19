@@ -1,7 +1,6 @@
-package org.msk.loxone.zigbee2mqtt.manager.ui;
+package org.msk.zigbee2mqtt.manager.ui;
 
 import com.vaadin.flow.component.ClickEvent;
-import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
@@ -17,6 +16,7 @@ import com.vaadin.flow.component.page.Push;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.validator.StringLengthValidator;
+import com.vaadin.flow.router.PreserveOnRefresh;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import com.vaadin.flow.spring.annotation.UIScope;
@@ -24,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.msk.zigbee2mqtt.ZigbeeDevice;
 import org.msk.zigbee2mqtt.ZigbeeService;
+import org.msk.zigbee2mqtt.loxone.ui.LoxoneMappingForm;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import javax.annotation.PostConstruct;
@@ -32,16 +33,17 @@ import java.time.temporal.ChronoUnit;
 
 import static java.lang.String.format;
 
-
 @Route
-@SpringComponent
-@RequiredArgsConstructor
 @UIScope
-@Slf4j
+@SpringComponent
 @Push
+@PreserveOnRefresh
+@RequiredArgsConstructor
+@Slf4j
 public class MainView extends VerticalLayout {
 
     private final ZigbeeService zigbeeService;
+
     private Grid<ZigbeeDevice> zigbeeDeviceGrid;
     private Editor<ZigbeeDevice> editor;
     private TextField friendlyNameTextField;
@@ -51,6 +53,7 @@ public class MainView extends VerticalLayout {
     private Button enableJoinButton = new Button("Enable", this::enableJoin);
     private Label statusLabel = new Label();
     private UI ui;
+    private boolean loxoneStuffEnabled = true;
 
     @PostConstruct
     public void init() {
@@ -60,11 +63,18 @@ public class MainView extends VerticalLayout {
     private void setupUI() {
         ui = UI.getCurrent();
         setupGrid();
+        add(new Label("Zigbee device management:"));
         add(statusLabel);
         add(new HorizontalLayout(enableJoinButton, disableJoinButton, autoDisableMinutesTextField));
-        add(new Text("Zigbee device list:"));
         add(new Button("Refresh", this::refreshDeviceList));
         add(zigbeeDeviceGrid);
+        if (loxoneStuffEnabled) {
+            add(new Label("Loxone mapping:"));
+            add(new Button("Edit", event -> getUI().get().navigate(LoxoneMappingForm.class)));
+        }
+        add(new Label("Zigbee logs:"));
+        add(new Button("Open", event -> getUI().get().navigate(ZigbeeLogForm.class)));
+
         autoDisableMinutesTextField.setValue("30");
         update();
     }
@@ -166,19 +176,17 @@ public class MainView extends VerticalLayout {
 
     @Scheduled(fixedDelay = 5000)
     void update() {
-        ui.access(() -> {
-            if (zigbeeService.isJoinEnabled()) {
-                enableJoinButton.setEnabled(false);
-                disableJoinButton.setEnabled(true);
-                statusLabel.setText(format("Joining is enabled for next %s minutes", zigbeeService.getJoinTimeout() / 60));
+        getUI().ifPresent(ui -> ui.access(() -> {
+            boolean joinEnabled = zigbeeService.isJoinEnabled();
+            if (joinEnabled) {
+                long howMinutes = (zigbeeService.getJoinTimeout() - System.currentTimeMillis()) / 1000 / 60;
+                statusLabel.setText(format("Joining is enabled for next %s minutes", howMinutes));
             } else {
                 statusLabel.setText("Joining is disabled");
-                enableJoinButton.setEnabled(true);
-                disableJoinButton.setEnabled(false);
-
             }
-        });
+        }));
 
     }
 
 }
+

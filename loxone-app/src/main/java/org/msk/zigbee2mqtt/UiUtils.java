@@ -1,4 +1,4 @@
-package org.msk.loxone.zigbee2mqtt;
+package org.msk.zigbee2mqtt;
 
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.ComponentEventListener;

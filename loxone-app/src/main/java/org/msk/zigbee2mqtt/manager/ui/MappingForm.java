@@ -1,4 +1,4 @@
-package org.msk.loxone.zigbee2mqtt.manager.ui;
+package org.msk.zigbee2mqtt.manager.ui;
 
 import java.util.HashSet;
 import java.util.Set;

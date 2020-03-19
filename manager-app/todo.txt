@@ -1,3 +1,2 @@
-- extract loxone stuff outside this project
-- enable joining
-- configuration + env vars
+- loxone stuff ako volitelny (na zaklade environment variable)
+- pouzivat filteringgrid

@@ -20,14 +20,14 @@ import org.springframework.stereotype.Component;
 public class DeviceConfiguration {
 
     public Configuration configuration = new Configuration();
-    private File cfgFile = Paths.get("settings.json").toFile();
 
     public void save() throws IOException {
-        new ObjectMapper().writeValue(cfgFile, configuration);
+        new ObjectMapper().writeValue(getConfigFile(), configuration);
     }
 
     public void load()  {
         try {
+            File cfgFile = getConfigFile();
             configuration = new ObjectMapper().readValue(cfgFile, Configuration.class);
             log.info("Loaded configuration from file {}", cfgFile);
         } catch (Exception e) {
@@ -73,6 +73,14 @@ public class DeviceConfiguration {
     static class Configuration {
 
         public Set<MappingDefinition> valueMappingDefinitions = new HashSet<>();
+
     }
 
+    private File getConfigFile() {
+        String settingsJson = System.getenv("SETTINGS_JSON");
+        if(settingsJson == null ) {
+            return Paths.get("settings.json").toFile();
+        }
+        return Paths.get(settingsJson).toFile();
+    }
 }
