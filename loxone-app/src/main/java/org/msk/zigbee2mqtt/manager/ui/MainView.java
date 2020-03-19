@@ -1,4 +1,4 @@
-package org.msk.loxone.zigbee2mqtt.manager.ui;
+package org.msk.zigbee2mqtt.manager.ui;
 
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;

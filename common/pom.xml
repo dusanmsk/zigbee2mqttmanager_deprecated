@@ -24,8 +24,9 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.eclipse.paho</groupId>
-			<artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+			<groupId>com.hivemq</groupId>
+			<artifactId>hivemq-mqtt-client</artifactId>
+			<version>1.1.4</version>
 		</dependency>
 
 		<dependency>

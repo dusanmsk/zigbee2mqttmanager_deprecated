@@ -1,4 +1,4 @@
-package org.msk.loxone.zigbee2mqtt;
+package org.msk.zigbee2mqtt;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -21,6 +21,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     public void configure(WebSecurity web) throws Exception {
+        web.ignoring().antMatchers("**");       // todo dusan.zatkovsky bez tohoto nefunguje autorefresh gridu, treba zistit cim to je
         web.ignoring().antMatchers(
                 "/VAADIN/**",
                 "/frontend/**",

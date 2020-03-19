@@ -16,7 +16,6 @@
     <modules>
         <module>common</module>
         <module>manager-app</module>
-        <module>loxone-app</module>
     </modules>
 
 
@@ -41,11 +40,6 @@
                 <artifactId>lombok</artifactId>
                 <version>1.18.12</version>
                 <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.paho</groupId>
-                <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
-                <version>1.2.2</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

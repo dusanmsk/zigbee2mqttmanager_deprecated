@@ -1,4 +1,4 @@
-package org.msk.loxone.zigbee2mqtt.zigbee.loxone;
+package org.msk.zigbee2mqtt.zigbee.loxone;
 
 import static java.lang.String.format;
 
